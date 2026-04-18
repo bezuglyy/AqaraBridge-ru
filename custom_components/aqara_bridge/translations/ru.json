@@ -1,0 +1,69 @@
+{
+    "config": {
+        "abort": {
+            "complete": "Настройка завершена."
+        },
+        "error": {
+            "get_auth_code_error": "Не удалось получить код подтверждения по SMS или email."
+        },
+        "flow_title": "{name}",
+        "step": {
+            "get_auth_code": {
+                "data": {
+                    "field_country_code": "Страна/регион облачного сервера",
+                    "field_account": "Учётная запись Aqara Home (телефон или email)",
+                    "field_refresh_token": "Refresh Token для разработчика",
+                    "field_app_id": "Aqara Cloud App ID",
+                    "field_app_key": "Aqara Cloud App Key",
+                    "field_key_id": "Aqara Cloud Key ID"
+                },
+                "description": "Войдите с помощью учётной записи, зарегистрированной в Aqara Home.",
+                "title": "Вход в облако Aqara"
+            },
+            "get_token": {
+                "data": {
+                    "field_auth_code": "Код подтверждения из SMS или email"
+                },
+                "description": "Введите полученный код подтверждения.",
+                "title": "Подтверждение входа в Aqara"
+            },
+            "select_devices": {
+                "data": {
+                    "field_selected_devices": "Выберите устройства"
+                },
+                "description": "Отметьте устройства, которые нужно добавить в Home Assistant.",
+                "title": "Выбор устройств"
+            }
+        }
+    },
+    "options": {
+        "abort": {
+            "complete": "Настройка завершена."
+        },
+        "step": {
+            "inits": {
+                "data": {
+                    "field_country_code": "Страна/регион облачного сервера",
+                    "field_account": "Учётная запись Aqara Home (телефон или email)",
+                    "field_refresh_token": "Refresh Token для разработчика",
+                    "field_app_id": "Aqara Cloud App ID",
+                    "field_app_key": "Aqara Cloud App Key",
+                    "field_key_id": "Aqara Cloud Key ID"
+                },
+                "description": "Используйте эти данные для обновления авторизации и параметров интеграции.",
+                "title": "Параметры Aqara Bridge"
+            },
+            "option_get_token": {
+                "data": {
+                    "field_auth_code": "Код подтверждения из SMS или email"
+                },
+                "description": "Введите новый код подтверждения.",
+                "title": "Подтверждение авторизации"
+            }
+        },
+        "error": {
+            "refresh_token_error": "Неверный Refresh Token.",
+            "auth_code_error": "Неверный код подтверждения."
+        }
+    }
+}

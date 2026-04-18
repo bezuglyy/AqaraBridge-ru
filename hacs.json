@@ -1,0 +1,7 @@
+{
+    "name": "Aqara Bridge RU",
+    "render_readme": true,
+    "domain": "aqara_bridge",
+    "documentation": "https://github.com/bezuglyy/AqaraBridge-ru",
+    "issue_tracker": "https://github.com/bezuglyy/AqaraBridge-ru/issues"
+}
