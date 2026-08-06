@@ -356,6 +356,38 @@ class AiotCloud:
             resources=[{"subjectId": subject_id, "keyId": keyid}],
         )
 
+    async def async_query_ir_acstate(self, subject_id: str):
+        """查询空调状态 (query.ir.acState)"""
+        return await self._async_invoke_aqara_cloud_api(
+            intent="query.ir.acState", did=subject_id
+        )
+
+    async def async_query_ir_keys(self, subject_id: str):
+        """查询红外遥控器按键 (query.ir.keys)"""
+        return await self._async_invoke_aqara_cloud_api(
+            intent="query.ir.keys", did=subject_id
+        )
+
+    async def async_write_ir_click(
+        self,
+        subject_id: str,
+        ac_key: str,
+        brand_id=None,
+        controller_id=None,
+        key_id=None,
+        is_ac_match=None,
+    ):
+        """发送红外空调按键 (write.ir.click)"""
+        return await self._async_invoke_aqara_cloud_api(
+            intent="write.ir.click",
+            did=subject_id,
+            acKey=ac_key,
+            brandId=brand_id,
+            controllerId=controller_id,
+            keyId=key_id,
+            isAcMatch=is_ac_match,
+        )
+
     async def async_query_position_detail(self, positionIds: list):
         """查询位置信息"""
         return await self._async_invoke_aqara_cloud_api(

@@ -2686,6 +2686,61 @@ AIOT_DEVICE_MAPPING = [
             },
         ],
     },
+    ##################################虚拟红外空调 (M3)##################################
+    {
+        "virtual.ir_local.ac": ["Aqara", "IR Air Conditioner", ""],
+        "params": [
+            {
+                "climate": {
+                    MK_INIT_PARAMS: {
+                        MK_HASS_NAME: "ir_ac",
+                        "supported_features": ClimateEntityFeature.TARGET_TEMPERATURE
+                        | ClimateEntityFeature.FAN_MODE
+                        | ClimateEntityFeature.SWING_MODE
+                        | ClimateEntityFeature.TURN_ON
+                        | ClimateEntityFeature.TURN_OFF,
+                        "max_temp": float(30),
+                        "min_temp": float(16),
+                        "hvac_modes": [
+                            HVACMode.OFF,
+                            HVACMode.COOL,
+                            HVACMode.HEAT,
+                            HVACMode.AUTO,
+                            HVACMode.DRY,
+                            HVACMode.FAN_ONLY,
+                        ],
+                        "fan_modes": [
+                            FAN_AUTO,
+                            FAN_LOW,
+                            FAN_MEDIUM,
+                            FAN_HIGH,
+                        ],
+                        "swing_modes": [
+                            SWING_OFF,
+                            SWING_ON,
+                        ],
+                        "temperature_unit": UnitOfTemperature.CELSIUS,
+                        "target_temperature_step": float(1),
+                    },
+                    MK_RESOURCES: {},
+                }
+            }
+        ],
+    },
+    ##################################虚拟红外电视 (M3)##################################
+    {
+        "virtual.ir_local.tv": ["Aqara", "IR TV", ""],
+        "params": [
+            {
+                "remote": {
+                    MK_INIT_PARAMS: {
+                        MK_HASS_NAME: "ir_tv",
+                    },
+                    MK_RESOURCES: {},
+                }
+            }
+        ],
+    },
     ##################################不支持的设备##################################
     {
         "lumi.camera.acn005": ["Aqara", "DoorBell G4", ""],

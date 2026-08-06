@@ -1,4 +1,5 @@
 import logging
+import time
 import re
 from homeassistant.components.climate import *
 
@@ -127,6 +128,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         "ac_partner_p3": AiotACPartnerP3Entity,
         "airrtc_tcpecn02": AiotAirrtcTcpecn02Entity,
         "airrtc_vrfegl01": AiotAirrtcVrfegl01Entity,
+        "ir_ac": AiotIRACEntity,
     }
     await manager.async_add_entities(
         config_entry, TYPE, cls_entities, async_add_entities
@@ -701,3 +703,126 @@ class AiotACPartnerP3Entity(AiotEntityBase, ClimateEntity):
             await self.async_set_res_value("ac_quick_cool", "1")
         elif preset_mode == PRESET_NONE:
             await self.async_set_res_value("ac_quick_cool", "0")
+
+
+class AiotIRACEntity(AiotEntityBase, ClimateEntity):
+    """Aqara IR Air Conditioner (virtual.ir_local.ac) via M3 hub cloud IR."""
+
+    _AC_MODE_RES_ATTR = {
+        "0": HVACMode.COOL,
+        "1": HVACMode.HEAT,
+        "2": HVACMode.AUTO,
+        "3": HVACMode.FAN_ONLY,
+        "4": HVACMode.DRY,
+    }
+    _AC_MODE_ATTR_RES = {v: k for k, v in _AC_MODE_RES_ATTR.items()}
+    _AC_FAN_RES_ATTR = {"0": FAN_AUTO, "1": FAN_LOW, "2": FAN_MEDIUM, "3": FAN_HIGH}
+    _AC_FAN_ATTR_RES = {v: k for k, v in _AC_FAN_RES_ATTR.items()}
+
+    def __init__(self, hass, device, res_params, **kwargs):
+        AiotEntityBase.__init__(self, hass, device, res_params, TYPE, **kwargs)
+        self._attr_hvac_modes = kwargs.get("hvac_modes")
+        self._attr_fan_modes = kwargs.get("fan_modes")
+        self._attr_swing_modes = kwargs.get("swing_modes")
+        self._attr_temperature_unit = kwargs.get("temperature_unit")
+        self._attr_target_temperature_step = kwargs.get("target_temperature_step")
+        self._attr_max_temp = kwargs.get("max_temp")
+        self._attr_min_temp = kwargs.get("min_temp")
+        self._attr_supported_features = kwargs.get("supported_features", 0)
+        self._attr_should_poll = True
+        self._attr_hvac_mode = HVACMode.OFF
+        self._attr_target_temperature = 24.0
+        self._attr_fan_mode = FAN_AUTO
+        self._attr_swing_mode = SWING_OFF
+        self._last_poll = 0
+
+    @staticmethod
+    def _parse_ac_state(state: str):
+        """P0_M4_T20_D0_L1 -> dict of {P:0, M:4, T:20, D:0, L:1}"""
+        parts = {}
+        for token in (state or "").split("_"):
+            if len(token) >= 2 and token[0].isalpha():
+                parts[token[0]] = token[1:]
+        return parts
+
+    async def async_update(self):
+        """Poll AC state from the Aqara cloud."""
+        now = time.monotonic()
+        if now - self._last_poll < 60:
+            return
+        self._last_poll = now
+        try:
+            resp = await self._aiot_manager.session.async_query_ir_acstate(
+                self.device.did
+            )
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.warning("IR AC state query failed: %s", err)
+            return
+        if not isinstance(resp, dict):
+            return
+        state = resp.get("acState")
+        if not state:
+            return
+        parts = self._parse_ac_state(state)
+        power = parts.get("P")
+        mode = parts.get("M")
+        temp = parts.get("T")
+        direction = parts.get("D")
+        fan = parts.get("L")
+        if power == "1":
+            self._attr_hvac_mode = HVACMode.OFF
+        else:
+            self._attr_hvac_mode = self._AC_MODE_RES_ATTR.get(
+                mode, HVACMode.OFF if power == "1" else HVACMode.COOL
+            )
+        if temp is not None:
+            try:
+                self._attr_target_temperature = float(temp)
+            except ValueError:
+                pass
+        if fan is not None:
+            self._attr_fan_mode = self._AC_FAN_RES_ATTR.get(fan, FAN_AUTO)
+        if direction is not None:
+            self._attr_swing_mode = SWING_ON if direction == "0" else SWING_OFF
+        self.async_write_ha_state()
+
+    def _build_ac_key(self):
+        if self._attr_hvac_mode == HVACMode.OFF:
+            return "P1"
+        mode = self._AC_MODE_ATTR_RES.get(self._attr_hvac_mode, "0")
+        temp = int(round(self._attr_target_temperature or 24))
+        fan = self._AC_FAN_ATTR_RES.get(self._attr_fan_mode, "0")
+        direction = "0" if self._attr_swing_mode == SWING_ON else "1"
+        return f"P0_M{mode}_T{temp}_D{direction}_L{fan}"
+
+    async def _send_ac_key(self):
+        ac_key = self._build_ac_key()
+        _LOGGER.info("IR AC %s send acKey: %s", self.device.did, ac_key)
+        await self._aiot_manager.session.async_write_ir_click(
+            self.device.did, ac_key
+        )
+        self.schedule_update_ha_state()
+
+    async def async_set_hvac_mode(self, hvac_mode):
+        self._attr_hvac_mode = hvac_mode
+        await self._send_ac_key()
+
+    async def async_set_temperature(self, **kwargs):
+        temperature = kwargs.get("temperature")
+        if temperature is not None:
+            self._attr_target_temperature = temperature
+        await self._send_ac_key()
+
+    async def async_set_fan_mode(self, fan_mode):
+        self._attr_fan_mode = fan_mode
+        await self._send_ac_key()
+
+    async def async_set_swing_mode(self, swing_mode):
+        self._attr_swing_mode = swing_mode
+        await self._send_ac_key()
+
+    async def async_turn_on(self):
+        await self.async_set_hvac_mode(HVACMode.COOL)
+
+    async def async_turn_off(self):
+        await self.async_set_hvac_mode(HVACMode.OFF)
