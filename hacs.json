@@ -1,7 +1,6 @@
 {
-    "name": "Aqara Bridge RU",
-    "render_readme": true,
-    "domain": "aqara_bridge",
-    "documentation": "https://github.com/bezuglyy/AqaraBridge-ru",
-    "issue_tracker": "https://github.com/bezuglyy/AqaraBridge-ru/issues"
+  "name": "Aqara Bridge",
+  "content_in_root": false,
+  "render_readme": true,
+  "homeassistant": "2025.1.0"
 }
